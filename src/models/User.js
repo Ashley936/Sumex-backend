@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
@@ -42,22 +44,56 @@ const userSchema = new mongoose.Schema(
     address: {
       type: String,
     },
-    aadharCard: {
+    idCard: {
       type: Buffer,
     },
     profilePic: {
       type: Buffer,
     },
+    tokens: [
+      {
+        token: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
-// accountInfo will contain all the account collections which have userId = _id 
+// accountInfo will contain all the account collections which have userId = _id
 // whereas in case of userId will contain the user collection match
-userSchema.virtual('accountInfo', {
-    ref: 'Account',
-    foreignField: 'userId',
-    localField: '_id'
-})
-const User = mongoose.model('User', userSchema);
+userSchema.virtual("accountInfo", {
+  ref: "Account",
+  foreignField: "userId",
+  localField: "_id",
+});
+userSchema.methods.generateAuthToken = async function () {
+  const user = this;
+  const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_TOKEN);
+  user.tokens = user.tokens.concat({ token });
+  await user.save();
+  return token;
+};
+userSchema.statics.findByCredentials = async function (email, password) {
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new Error("No such user found!!");
+  }
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new Error("Wrong password!!!");
+  }
+  return user;
+};
+
+userSchema.pre("save", async function (next) {
+  const user = this;
+  if (user.isModified("password")) {
+    user.password = await bcrypt.hash(user.password, 8);
+  }
+  next();
+});
+const User = mongoose.model("User", userSchema);
 
 module.exports = User;
