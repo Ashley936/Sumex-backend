@@ -40,8 +40,7 @@ const accountSchema = new mongoose.Schema({
         required: true,
       },
       transactionDate: {
-        type: Date,
-        required: true,
+        type: Date
       },
     },
   ],
