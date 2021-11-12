@@ -5,9 +5,10 @@ const auth = require("../middleware/auth");
 const multer = require("multer");
 const sharp = require("sharp");
 const express = require("express");
+const bcrypt = require("bcryptjs");
 const router = new express.Router();
 
-// User signIn  return User
+// User signUp  return User
 router.post("/signup", async (req, res) => {
   const user = new User(req.body);
   const account = new Account({ userId: user._id });
@@ -35,7 +36,7 @@ router.post("/login", async (req, res) => {
     res.send({ user, token, account });
   } catch (e) {
     console.log(e);
-    res.status(400).send({ error: "No such user found" });
+    res.status(404).send({ error: "No such user found" });
   }
 });
 // Get User and account by profile
@@ -49,8 +50,28 @@ router.get("/user", auth, async (req, res) => {
 // Edit user properties
 router.patch("/user", auth, async (req, res) => {
   const changes = Object.keys(req.body);
-  const userChanges = ["userName", "email", "password", "age", "address"];
-  const accountChanges = ["accountBal", "transactionHistory", "loanHistory"];
+  const userChanges = [
+    "userName",
+    "lastName",
+    "email",
+    "password",
+    "address",
+    "unitNo",
+    "city",
+    "state",
+    "country",
+    "dob",
+    "postalCode",
+    "phoneNo",
+    "gender",
+    "idType",
+  ];
+  const accountChanges = [
+    "accountBal",
+    "transactionHistory",
+    "loanHistory",
+    "cardInfo",
+  ];
   const isValid = changes.every(
     (change) => userChanges.includes(change) || accountChanges.includes(change)
   );
@@ -58,11 +79,27 @@ router.patch("/user", auth, async (req, res) => {
     return res.status(404).send({ error: "Some field is invalid" });
   }
   try {
-    changes.forEach((change) => {
+    changes.forEach(async (change) => {
       if (userChanges.includes(change)) {
-        req.user[change] = req.body[change];
+        if (change === "password") {
+          const isMatch = await bcrypt.compare(
+            req.body[change].oldPassword,
+            req.user.password
+          );
+          if (isMatch) {
+            req.user[change] = await bcrypt.hash(req.body.password.newPassword,8);
+          } else {
+            throw new Error("Old Password does not match");
+          }
+        } else {
+          req.user[change] = req.body[change];
+        }
       } else if (accountChanges.includes(change)) {
-        req.account[change] = req.body[change];
+        if (change === "transactionHistory" || change === "loanHistory") {
+          req.account[change] = [...req.account[change], ...req.body[change]];
+        } else {
+          req.account[change] = req.body[change];
+        }
       }
     });
 
@@ -112,12 +149,13 @@ router.post(
 );
 
 // get profile pic
-router.get("/user/pfp", auth, async (req, res) => {
-  if (!req.user.profilePic) {
+router.get("/user/pfp/:id", async (req, res) => {
+  const user = await User.findOne({ _id: req.params.id });
+  if (!user.profilePic) {
     res.send({ error: "No pfp set" });
   } else {
     res.set("Content-Type", "image/png");
-    res.send(req.user.profilePic);
+    res.send(user.profilePic);
   }
 });
 
@@ -154,12 +192,19 @@ router.get("/user/idCard", auth, async (req, res) => {
 // Delete user if no account and delete account
 // (see if more than 1 account is needed)
 
-router.delete("/user", auth, async (req, res) => {
+router.delete("/delete", auth, async (req, res) => {
   const user = await User.findOne({ _id: req.user._id });
   const account = await Account.findOne({ userId: user._id });
   await account.remove();
   await user.remove();
   res.status(200).send({ user, account });
+});
+
+router.delete("/user", auth, async (req, res) => {
+  const user = await User.findOne({ _id: req.user._id });
+  user.tokens = [];
+  await user.save();
+  res.status(200).send({ user });
 });
 
 // get all users

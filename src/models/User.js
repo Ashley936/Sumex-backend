@@ -10,6 +10,10 @@ const userSchema = new mongoose.Schema(
       required: [true, "name is required"],
       trim: true,
     },
+    lastName: {
+      type: String,
+      trim: true,
+    },
     email: {
       type: String,
       unique: true,
@@ -31,21 +35,38 @@ const userSchema = new mongoose.Schema(
         }
       },
     },
-    age: {
-      type: Number,
-      default: 18,
-      trim: true,
-      validate(value) {
-        if (value <= 0) {
-          throw new Error("ERROR from schema: Age should be positive!!!");
-        }
-      },
-    },
     address: {
+      type: String,
+    },
+    unitNo: {
+      type: String,
+    },
+    city: {
+      type: String,
+    },
+    postalCode: {
+      type: String,
+    },
+    state: {
+      type: String,
+    },
+    country: {
+      type: String,
+    },
+    dob: {
+      type: Date,
+    },
+    phoneNo: {
+      type: Number,
+    },
+    gender: {
       type: String,
     },
     idCard: {
       type: Buffer,
+    },
+    idType: {
+      type: String
     },
     profilePic: {
       type: Buffer,

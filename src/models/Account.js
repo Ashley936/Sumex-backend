@@ -23,12 +23,24 @@ const accountSchema = new mongoose.Schema({
         type: String,
         required: true,
       },
+      bankType: {
+        type: String,
+        required: true,
+      },
+      accNo: {
+        type: String,
+        required: true,
+      },
       amount: {
         type: Number,
         required: true,
       },
       finalBal: {
         type: Number,
+        required: true,
+      },
+      transactionDate: {
+        type: Date,
         required: true,
       },
     },
@@ -41,33 +53,46 @@ const accountSchema = new mongoose.Schema({
       },
       loadId: {
         type: String,
-        required: true
+        required: true,
       },
-      amount: {
-        type: Number,
-        required: true
+      date: {
+        type: Date,
+        required: true,
       },
       finalBal: {
         type: Number,
-        required:true
+        required: true,
       },
       interest: {
         type: Number,
-        required: true
-      }
+        required: true,
+      },
     },
   ],
   cardInfo: {
-    card: {
+    cardApplied: {
       type: Boolean,
-      default: false
+      default: false,
+    },
+    applicationDate: {
+      type: Date
+    },
+    applicationApproved: {
+      type: Boolean,
+      default: false,
     },
     cardNo: {
       type: String,
       minlength: 10,
-      maxlength: 11
-    }
-  }
+      maxlength: 11,
+    },
+    cardType: {
+      type: String
+    },
+    cardBrand: {
+      type: String
+    },
+  },
 });
 
 accountSchema.statics.findByUserId = async function (userId) {
@@ -76,7 +101,7 @@ accountSchema.statics.findByUserId = async function (userId) {
     throw new Error("No account found");
   }
   return account;
-}
+};
 const Account = mongoose.model("Account", accountSchema);
 
 module.exports = Account;
