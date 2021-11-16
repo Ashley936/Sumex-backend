@@ -169,7 +169,7 @@ router.post(
     res.send(req.user);
   },
   (error, req, res, next) => {
-    res.status(400).send({ error: error.message });
+    res.status(200).send({ error: error.message });
   }
 );
 
