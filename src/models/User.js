@@ -62,11 +62,24 @@ const userSchema = new mongoose.Schema(
     gender: {
       type: String,
     },
+    occupation: {
+      type: String
+    },
+    annualIncome: {
+      type: Number,
+    },
     idCard: {
       type: Buffer,
     },
-    idType: {
-      type: String
+    idInfo: {
+      idType: {
+        type: String,
+      },
+      idVerified: {
+        type: Boolean,
+        default: false,
+        required: true,
+      },
     },
     profilePic: {
       type: Buffer,
@@ -81,8 +94,8 @@ const userSchema = new mongoose.Schema(
     ],
     isAdmin: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   { timestamps: true }
 );

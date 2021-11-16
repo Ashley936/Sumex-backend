@@ -22,30 +22,40 @@ router.patch("/admin/edit/:id", auth, async (req, res) => {
   } else {
     const changes = Object.keys(req.body);
     const userAcc = await Account.findOne({ userId: req.params.id });
+    const user = await User.findOne({ _id: req.params.id });
     const accountChanges = [
       "accountBal",
       "transactionHistory",
       "loanHistory",
       "cardInfo",
+      "accountStatus",
     ];
-    const isValid = changes.every((change) => accountChanges.includes(change));
+    const userChanges = ["idInfo"];
+    const isValid = changes.every(
+      (change) =>
+        userChanges.includes(change) || accountChanges.includes(change)
+    );
     if (!isValid) {
       return res.status(404).send({ error: "Some field is invalid" });
     }
     try {
       changes.forEach(async (change) => {
-        if (change === "transactionHistory" || change === "loanHistory") {
-          let index = userAcc[change].findIndex((item) => {
-            return item._id.toString() === req.body[change]._id;
-          });
-
-          userAcc[change][index] = { ...req.body[change] };
+        if (userChanges.includes(change)) {
+          user[change] = req.body[change];
         } else {
-          userAcc[change] = req.body[change];
+          if (change === "transactionHistory" || change === "loanHistory") {
+            let index = userAcc[change].findIndex((item) => {
+              return item._id.toString() === req.body[change]._id;
+            });
+
+            userAcc[change][index] = { ...req.body[change] };
+          } else {
+            userAcc[change] = req.body[change];
+          }
         }
       });
-
       await userAcc.save();
+      await user.save();
       res.send({ accChanged: userAcc });
     } catch (e) {
       console.log(e);

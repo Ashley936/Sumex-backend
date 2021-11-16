@@ -54,7 +54,6 @@ router.patch("/user", auth, async (req, res) => {
     "userName",
     "lastName",
     "email",
-    "password",
     "address",
     "unitNo",
     "city",
@@ -64,7 +63,9 @@ router.patch("/user", auth, async (req, res) => {
     "postalCode",
     "phoneNo",
     "gender",
-    "idType",
+    "idInfo",
+    "occupation",
+    "annualIncome"
   ];
   const accountChanges = [
     "accountBal",
@@ -81,19 +82,7 @@ router.patch("/user", auth, async (req, res) => {
   try {
     changes.forEach(async (change) => {
       if (userChanges.includes(change)) {
-        if (change === "password") {
-          const isMatch = await bcrypt.compare(
-            req.body[change].oldPassword,
-            req.user.password
-          );
-          if (isMatch) {
-            req.user[change] = await bcrypt.hash(req.body.password.newPassword,8);
-          } else {
-            throw new Error("Old Password does not match");
-          }
-        } else {
-          req.user[change] = req.body[change];
-        }
+        req.user[change] = req.body[change];
       } else if (accountChanges.includes(change)) {
         if (change === "transactionHistory" || change === "loanHistory") {
           req.account[change] = [...req.account[change], ...req.body[change]];
@@ -131,8 +120,10 @@ router.post(
   auth,
   upload.single("pfp"),
   async (req, res) => {
-    if (!req.file) {
-      req.user.profilePic = undefined;
+    try {
+      if (!req.file) {
+        req.user.profilePic = undefined;
+        throw new Error ("No file")
     } else {
       const buffer = await sharp(req.file.buffer)
         .resize({ width: 250, height: 250 })
@@ -142,9 +133,12 @@ router.post(
     }
     await req.user.save();
     res.send(req.user);
+    } catch (e) {
+      res.status(200).send({error: e.message})
+    }
   },
   (error, req, res, next) => {
-    res.status(404).send({ error: error.message });
+    res.status(200).send({ error: error.message });
   }
 );
 
@@ -180,12 +174,13 @@ router.post(
 );
 
 // get id card
-router.get("/user/idCard", auth, async (req, res) => {
-  if (!req.user.idCard) {
+router.get("/user/idCard/:id", async (req, res) => {
+  const user = await User.findOne({ _id: req.params.id });
+  if (!user.idCard) {
     res.send({ error: "NO ID CARD!!" });
   } else {
     res.set("Content-Type", "image/png");
-    res.send(req.user.idCard);
+    res.send(user.idCard);
   }
 });
 // Delete user and their account

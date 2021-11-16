@@ -6,16 +6,13 @@ const accountSchema = new mongoose.Schema({
     required: true,
     ref: "User",
   },
-  /* accountNo: {
-    type: String,
-    required: [true, "ERROR from schema: No acc no. provided"],
-    unique: true,
-    minlength: 12,
-    maxlength: 12,
-  }, */
   accountBal: {
     type: Number,
     default: 0,
+  },
+  accountStatus: {
+    type: String,
+    default: "active"
   },
   transactionHistory: [
     {
@@ -50,10 +47,6 @@ const accountSchema = new mongoose.Schema({
         type: Number,
         required: true,
       },
-      loadId: {
-        type: String,
-        required: true,
-      },
       date: {
         type: Date,
         required: true,
@@ -66,6 +59,16 @@ const accountSchema = new mongoose.Schema({
         type: Number,
         required: true,
       },
+      time: {
+        type: Number,
+      },
+      purpose: {
+        type: String,
+      },
+      loanApproved: {
+        type: Boolean,
+        default: false
+      }
     },
   ],
   cardInfo: {
@@ -77,13 +80,12 @@ const accountSchema = new mongoose.Schema({
       type: Date
     },
     applicationApproved: {
+      required: true,
       type: Boolean,
       default: false,
     },
     cardNo: {
       type: String,
-      minlength: 10,
-      maxlength: 11,
     },
     cardType: {
       type: String
