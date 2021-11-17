@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const Account = require("../models/Account");
 const auth = require("../middleware/auth");
+const { sendWelcomeMail } = require("../email/account");
 
 const multer = require("multer");
 const sharp = require("sharp");
@@ -19,8 +20,7 @@ router.post("/signup", async (req, res) => {
     const token = await user.generateAuthToken();
     res.status(201).send({ user, token, account });
   } catch (e) {
-    console.log(e);
-    res.status(400).send({ error: "Invalid user info" });
+    res.send({ error: "Invalid user info" });
   }
 });
 // User LogIn return User
@@ -33,10 +33,10 @@ router.post("/login", async (req, res) => {
     );
     const account = await Account.findByUserId(user._id);
     const token = await user.generateAuthToken();
+    sendWelcomeMail("namitarastogimwn@gmail.com", user.userName);
     res.send({ user, token, account });
   } catch (e) {
-    console.log(e);
-    res.status(404).send({ error: "No such user found" });
+    res.send({ error: e.message });
   }
 });
 // Get User and account by profile
@@ -100,7 +100,23 @@ router.patch("/user", auth, async (req, res) => {
     res.status(400).send({ error: "Update failed" });
   }
 });
-
+router.patch('/password',auth, async (req, res) => {
+  try {
+    const isMatch = await bcrypt.compare(
+      req.body.password.oldPassword,
+      req.user.password
+    );
+    if (isMatch) {
+      req.user.password = req.body.password.newPassword;
+      req.user.save();
+      res.send({ user: req.user })
+    } else {
+      throw new Error("Old Password does not match");
+    }
+  } catch (e) {
+    res.status(200).send({error: e.message})
+  }
+})
 // Edit user profile pic and identity card
 const upload = multer({
   //dest:'images'
@@ -199,6 +215,7 @@ router.delete("/user", auth, async (req, res) => {
   const user = await User.findOne({ _id: req.user._id });
   user.tokens = [];
   await user.save();
+  sendWelcomeMail("namitarastogimwn@gmail.com", user.userName);
   res.status(200).send({ user });
 });
 

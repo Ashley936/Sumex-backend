@@ -75,7 +75,7 @@ router.delete("/admin/delete/:id", auth, async (req, res) => {
       await user.remove();
       res.status(200).send({ user, account });
     } catch (e) {
-      res.status(404).send({ error: "Np user found" });
+      res.status(200).send({ error: "No user found" });
     }
   }
 });
