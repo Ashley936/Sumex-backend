@@ -1,7 +1,11 @@
 const User = require("../models/User");
 const Account = require("../models/Account");
 const auth = require("../middleware/auth");
-const { sendWelcomeMail } = require("../email/account");
+const {
+  sendWelcomeMail,
+  sendCancelationMail,
+  sendTransactionEmail,
+} = require("../email/account");
 
 const multer = require("multer");
 const sharp = require("sharp");
@@ -65,7 +69,7 @@ router.patch("/user", auth, async (req, res) => {
     "gender",
     "idInfo",
     "occupation",
-    "annualIncome"
+    "annualIncome",
   ];
   const accountChanges = [
     "accountBal",
@@ -86,6 +90,9 @@ router.patch("/user", auth, async (req, res) => {
       } else if (accountChanges.includes(change)) {
         if (change === "transactionHistory" || change === "loanHistory") {
           req.account[change] = [...req.account[change], ...req.body[change]];
+          if (change === "transactionHistory") {
+            sendTransactionEmail("namitarastogimwn@gmail.com", req.body.transactionHistory[0]);
+          }
         } else {
           req.account[change] = req.body[change];
         }
@@ -100,7 +107,7 @@ router.patch("/user", auth, async (req, res) => {
     res.status(400).send({ error: "Update failed" });
   }
 });
-router.patch('/password',auth, async (req, res) => {
+router.patch("/password", auth, async (req, res) => {
   try {
     const isMatch = await bcrypt.compare(
       req.body.password.oldPassword,
@@ -109,14 +116,14 @@ router.patch('/password',auth, async (req, res) => {
     if (isMatch) {
       req.user.password = req.body.password.newPassword;
       req.user.save();
-      res.send({ user: req.user })
+      res.send({ user: req.user });
     } else {
       throw new Error("Old Password does not match");
     }
   } catch (e) {
-    res.status(200).send({error: e.message})
+    res.status(200).send({ error: e.message });
   }
-})
+});
 // Edit user profile pic and identity card
 const upload = multer({
   //dest:'images'
@@ -139,18 +146,18 @@ router.post(
     try {
       if (!req.file) {
         req.user.profilePic = undefined;
-        throw new Error ("No file")
-    } else {
-      const buffer = await sharp(req.file.buffer)
-        .resize({ width: 250, height: 250 })
-        .png()
-        .toBuffer();
-      req.user.profilePic = buffer;
-    }
-    await req.user.save();
-    res.send(req.user);
+        throw new Error("No file");
+      } else {
+        const buffer = await sharp(req.file.buffer)
+          .resize({ width: 250, height: 250 })
+          .png()
+          .toBuffer();
+        req.user.profilePic = buffer;
+      }
+      await req.user.save();
+      res.send(req.user);
     } catch (e) {
-      res.status(200).send({error: e.message})
+      res.status(200).send({ error: e.message });
     }
   },
   (error, req, res, next) => {
@@ -215,7 +222,7 @@ router.delete("/user", auth, async (req, res) => {
   const user = await User.findOne({ _id: req.user._id });
   user.tokens = [];
   await user.save();
-  sendWelcomeMail("namitarastogimwn@gmail.com", user.userName);
+  sendCancelationMail("namitarastogimwn@gmail.com", user.userName)
   res.status(200).send({ user });
 });
 
