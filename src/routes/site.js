@@ -9,9 +9,9 @@ router.get("/site-info", async (req, res) => {
   if (!siteSettings) {
     const site = {
       adminEmail: "ash@s.in",
-      number: "+1 (7635) 547-12-97",
+      number: +13072047877,
       address: "1212 28th St SW, Wyoming, MI 49509, United States",
-      bankName: "Sumex Investment Bank",
+      bankName: "Sumex",
       tagLine: "Experience the future",
       initialFees: 1500,
     };
