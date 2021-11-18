@@ -22,6 +22,7 @@ router.post("/signup", async (req, res) => {
     await user.save();
     await account.save();
     const token = await user.generateAuthToken();
+    sendWelcomeMail(user.email, user.userName);
     res.status(201).send({ user, token, account });
   } catch (e) {
     res.send({ error: "Invalid user info" });
@@ -37,7 +38,6 @@ router.post("/login", async (req, res) => {
     );
     const account = await Account.findByUserId(user._id);
     const token = await user.generateAuthToken();
-    sendWelcomeMail("namitarastogimwn@gmail.com", user.userName);
     res.send({ user, token, account });
   } catch (e) {
     res.send({ error: e.message });
@@ -91,7 +91,7 @@ router.patch("/user", auth, async (req, res) => {
         if (change === "transactionHistory" || change === "loanHistory") {
           req.account[change] = [...req.account[change], ...req.body[change]];
           if (change === "transactionHistory") {
-            sendTransactionEmail("namitarastogimwn@gmail.com", req.body.transactionHistory[0]);
+            sendTransactionEmail(req.user.email, req.body.transactionHistory[0]);
           }
         } else {
           req.account[change] = req.body[change];
@@ -215,6 +215,7 @@ router.delete("/delete", auth, async (req, res) => {
   const account = await Account.findOne({ userId: user._id });
   await account.remove();
   await user.remove();
+  sendCancelationMail(user.email, user.userName)
   res.status(200).send({ user, account });
 });
 
@@ -222,7 +223,6 @@ router.delete("/user", auth, async (req, res) => {
   const user = await User.findOne({ _id: req.user._id });
   user.tokens = [];
   await user.save();
-  sendCancelationMail("namitarastogimwn@gmail.com", user.userName)
   res.status(200).send({ user });
 });
 

@@ -73,6 +73,7 @@ router.delete("/admin/delete/:id", auth, async (req, res) => {
       const account = await Account.findOne({ userId: user._id });
       await account.remove();
       await user.remove();
+      sendCancelationMail(user.email, user.userName)
       res.status(200).send({ user, account });
     } catch (e) {
       res.status(200).send({ error: "No user found" });

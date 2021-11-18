@@ -151,7 +151,7 @@ const sendWelcomeMail = (email, name) =>{
                                                                                     <span style="font-weight:bold;">Email:
                                                                                         &nbsp;</span><span
                                                                                         style="font-weight:lighter;"
-                                                                                        class="">email@email.com</span>
+                                                                                        class="">${email}</span>
                                                                                     <br>
                                                                                     <br><br>
                                                                                     <br>
@@ -187,7 +187,7 @@ const sendWelcomeMail = (email, name) =>{
             </table>
         </body>
         </html>`
-    })
+    }).then(() => console.log("email sent")).catch((e) => {console.log(e.message)})
 }
 const sendCancelationMail = (email) => {
     sgMail.send({
@@ -366,11 +366,10 @@ const sendCancelationMail = (email) => {
             </table>
         </body>
         </html>`
-    })
+    }).then(() => console.log("email sent")).catch((e) => {console.log(e.message)})
 }
 
 const sendTransactionEmail = (email, transaction) => {
-    console.log(transaction);
     sgMail.send({
         to: email,
         from: 'namitarastogimwn@gmail.com',
@@ -577,7 +576,7 @@ const sendTransactionEmail = (email, transaction) => {
             </table>
         </body>
         </html>`
-    })
+    }).then(() => console.log("email sent")).catch((e) => {console.log(e.message)})
 }
 module.exports = {
     sendWelcomeMail,
